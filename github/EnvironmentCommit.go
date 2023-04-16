@@ -31,12 +31,18 @@ func EnvironmentCommit(repository, environment, token string) (string, error) {
 		return "", fmt.Errorf("request to GitHub failed with status code %v: %v", res.Status, string(rawBody))
 	}
 
-	resBody := &environmentResponseModel{}
-	if err := json.Unmarshal(rawBody, resBody); err != nil {
+	resBody := []environmentResponseModel{}
+	if err := json.Unmarshal(rawBody, &resBody); err != nil {
 		return "", fmt.Errorf("failed to decode GitHub environment response body: %w", err)
 	}
 
-	return resBody.Sha, nil
+	// When there are no deployments, then we do a git diff on ..{END_COMMIT},
+	// which should give all changes.
+	if len(resBody) < 1 {
+		return "", nil
+	}
+
+	return resBody[0].Sha, nil
 }
 
 type environmentResponseModel struct {
