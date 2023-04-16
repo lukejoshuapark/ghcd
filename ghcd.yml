@@ -1,0 +1,13 @@
+detect:
+
+  build-api:
+    mode: FilesDiff
+    paths:
+      - src/api
+
+  deploy-api:
+    mode: EnvironmentDiff
+    environment: production-api
+    paths:
+      - src/api
+      - deploy/terraform/api
