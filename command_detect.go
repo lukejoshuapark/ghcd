@@ -25,7 +25,7 @@ func detect(cctx *cli.Context) error {
 		return err
 	}
 
-	results := map[string]bool{}
+	results := map[string]*string{}
 
 	for targetName, target := range cfg.Detect {
 		switch target.Mode {
@@ -55,30 +55,27 @@ func detect(cctx *cli.Context) error {
 		}
 	}
 
-	for targetName, result := range results {
-		fmt.Printf("%v=%v\n", targetName, result)
+	if err := github.WriteResults(results); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func hasChanges(target *config.Target, diffFiles []string) bool {
+func hasChanges(target *config.Target, diffFiles []string) *string {
 	for _, checkPath := range target.Paths {
 		cleaned := path.Clean(checkPath)
 		cleaned = strings.ReplaceAll(cleaned, "\\", "/")
 		if !strings.HasPrefix(cleaned, "/") {
 			cleaned = "/" + cleaned
 		}
-		if !strings.HasSuffix(cleaned, "/") {
-			cleaned += "/"
-		}
 
 		for _, diffFile := range diffFiles {
-			if strings.HasPrefix(diffFile, cleaned) {
-				return true
+			if strings.HasPrefix(diffFile, cleaned+"/") || diffFile == cleaned {
+				return &diffFile
 			}
 		}
 	}
 
-	return false
+	return nil
 }
